@@ -4,26 +4,15 @@ import {
   joinVoiceChannel,
   createAudioPlayer,
   createAudioResource,
-  VoiceConnection
+  VoiceConnection,
+  demuxProbe
 } from '@discordjs/voice'
-import { join } from 'node:path'
-import { exec } from 'child_process'
+import * as youtubedl from 'youtube-dl-exec'
+import fs from 'fs'
+
 
 // load .env file into process.env
 config()
-
-// Test for downloading an mp3 file from spotify
-exec('spotifydl https://open.spotify.com/track/0x7vEcjqMVjuKvvsIUGEPT?si=5738563cb4e74c12', (err, stdout, stderr) => {
-  if (err) {
-    // node couldn't execute the command
-    console.log(err)
-    return;
-  }
-
-  // the *entire* stdout and stderr (buffered)
-  console.log(`stdout: ${stdout}`)
-  console.log(`stderr: ${stderr}`)
-})
 
 const client = new Client({
   // Define bot intectactions scope
@@ -45,12 +34,12 @@ client.on('messageCreate', (message) => {
   if (message.member) {
     const { channel } = message.member.voice
     const audioPlayer = createAudioPlayer()
-    // audioPlayer.on('error', error => {
-    //   console.log(error)
-    // })
-    // audioPlayer.on('stateChange', stateChange => {
-    //   console.log(stateChange.status)
-    // })
+    audioPlayer.on('error', error => {
+      console.log(error)
+    })
+    audioPlayer.on('stateChange', stateChange => {
+      console.log(stateChange.status)
+    })
     let voiceConnection: VoiceConnection
     if (channel) {
       voiceConnection = joinVoiceChannel({
@@ -59,13 +48,16 @@ client.on('messageCreate', (message) => {
         adapterCreator: channel.guild.voiceAdapterCreator
       })
       // Sample resource afterdark
-      console.log(join(__dirname, 'afterdark.mp3'))
-      const resource = createAudioResource(join(__dirname, 'afterdark.mp3'))
-      // console.log(resource)
+      const process = youtubedl.exec('https://www.youtube.com/watch?v=Cl5Vkd4N03Q', {
+        format: 'ba',
+        output: '-'
+      })
+      if (!process.stdout) return
+      const resource = createAudioResource(process.stdout)
       audioPlayer.play(resource)
       voiceConnection.subscribe(audioPlayer)
     }
   }
 })
 
-// client.login(process.env.TOKEN)
+client.login(process.env.TOKEN)
