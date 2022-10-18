@@ -1,17 +1,11 @@
+// load .env file into process.env
+import { config } from 'dotenv'
+config()
+
 import fs from 'node:fs'
 import path from 'node:path'
-import { config } from 'dotenv'
-import { Client, Collection, GatewayIntentBits } from 'discord.js'
-import {
-  joinVoiceChannel,
-  createAudioPlayer,
-  createAudioResource,
-  VoiceConnection,
-} from '@discordjs/voice'
-import * as youtubedl from 'youtube-dl-exec'
 
-// load .env file into process.env
-config()
+import { Client, Collection, GatewayIntentBits } from 'discord.js'
 
 const client = new Client({
   // Define bot intectactions scope
@@ -36,13 +30,14 @@ for (const file of commandFiles) {
   // @ts-ignore
   const command: Command = require(filePath)
   // @ts-ignore
-  client.commands.set(command.data.name, command)
+  client.commands.set(command.default.data.name, command)
 }
 
 client.on('ready', () => {
   console.log(`Logged in as ${client.user?.tag}`)
 })
 
+// liste to command execution and get it from its dictionary for its callback
 client.on('interactionCreate', async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
   // @ts-ignore
@@ -51,35 +46,11 @@ client.on('interactionCreate', async (interaction) => {
   if (!command) return;
 
   try {
-    await command.execute(interaction);
+    await command.default.execute(interaction);
   } catch (error) {
     console.error(error);
     await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
   }
-})
-
-// Create a join command where the bot will join said user channel
-client.on('messageCreate', (message) => {
-  // // Check if member is part of the current guild and its in a voice channel
-  // const channel  = message.member?.voice?.channel
-  // const audioPlayer = createAudioPlayer()
-  // let voiceConnection: VoiceConnection
-  // if (channel) {
-  //   voiceConnection = joinVoiceChannel({
-  //     channelId: channel.id,
-  //     guildId: channel.guild.id,
-  //     adapterCreator: channel.guild.voiceAdapterCreator
-  //   })
-  //   // Sample resource afterdark
-  //   const process = youtubedl.exec('https://www.youtube.com/watch?v=Cl5Vkd4N03Q', {
-  //     format: 'ba',
-  //     output: '-'
-  //   })
-  //   if (!process.stdout) return
-  //   const resource = createAudioResource(process.stdout)
-  //   audioPlayer.play(resource)
-  //   voiceConnection.subscribe(audioPlayer)
-  // }
 })
 
 client.login(process.env.TOKEN)
