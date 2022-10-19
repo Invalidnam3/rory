@@ -1,6 +1,9 @@
-import { ChatInputCommandInteraction, Client, SlashCommandBuilder } from 'discord.js'
+import { ExtendedClient } from '../utils/client'
+
+import { ChatInputCommandInteraction, SlashCommandBuilder } from 'discord.js'
 import { joinVoiceChannel, createAudioPlayer, createAudioResource, VoiceConnection } from '@discordjs/voice'
 import * as youtubedl from 'youtube-dl-exec'
+
 
 export default {
   data: new SlashCommandBuilder()
@@ -13,6 +16,7 @@ export default {
         .setRequired(true)),
   // Verify if this is the intended type
   async execute(interation: ChatInputCommandInteraction) {
+    const client: ExtendedClient = interation.client
     const youtubeUrl = interation.options.getString('url')
 
     const guild = interation.client.guilds.cache.get(interation.guildId)
@@ -24,7 +28,10 @@ export default {
       console.log(newState.status)
     })
 
-    if (!member.voice.channel) return
+    if (!member.voice.channel) {
+      await interation.reply('User is not in a voice channel')
+      return
+    }
 
     const { channel } = member.voice
     const voiceConnection = joinVoiceChannel({

@@ -1,3 +1,5 @@
+import { Command } from '../types/global'
+
 // load .env file into process.env
 import { config } from 'dotenv'
 config()
@@ -5,9 +7,11 @@ config()
 import fs from 'node:fs'
 import path from 'node:path'
 
-import { Client, Collection, GatewayIntentBits } from 'discord.js'
+import { Collection, GatewayIntentBits } from 'discord.js'
+import { QueueManager } from './utils/queue-manager'
+import { ExtendedClient } from './utils/client'
 
-const client = new Client({
+const client = new ExtendedClient({
   // Define bot intectactions scope
   intents: [
     GatewayIntentBits.Guilds,
@@ -18,7 +22,6 @@ const client = new Client({
 })
 
 // We have to disable ts checks here until we know how to extend Client
-// @ts-ignore
 client.commands = new Collection()
 const commandsPath = path.join(__dirname, 'commands')
 const commandFiles = fs.readdirSync(commandsPath)
@@ -27,20 +30,22 @@ const commandFiles = fs.readdirSync(commandsPath)
 for (const file of commandFiles) {
   const filePath = path.join(commandsPath, file)
   // Is this the only way to dynamic import ?
-  // @ts-ignore
   const command: Command = require(filePath)
-  // @ts-ignore
   client.commands.set(command.default.data.name, command)
 }
 
 client.on('ready', () => {
   console.log(`Logged in as ${client.user?.tag}`)
+  // Create a QueueManager for each Guild the bot is in
+  client.queues = new Map()
+  client.guilds.cache.forEach(guild => {
+    client.queues.set(guild.id, new QueueManager())
+  })
 })
 
-// listen to command execution and get it from its dictionary for its callback
+// listen to command execution and get it from its dictionary
 client.on('interactionCreate', async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
-  // @ts-ignore
   const command = client.commands.get(interaction.commandName);
 
   if (!command) return;
