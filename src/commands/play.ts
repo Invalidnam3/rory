@@ -1,35 +1,47 @@
-import { ChatInputCommandInteraction, SlashCommandBuilder } from 'discord.js'
-import  { joinVoiceChannel, createAudioPlayer, createAudioResource, VoiceConnection } from '@discordjs/voice'
+import { ChatInputCommandInteraction, Client, SlashCommandBuilder } from 'discord.js'
+import { joinVoiceChannel, createAudioPlayer, createAudioResource, VoiceConnection } from '@discordjs/voice'
+import * as youtubedl from 'youtube-dl-exec'
 
 export default {
   data: new SlashCommandBuilder()
     .setName('play')
-    .setDescription('Plays provided Youtube song'),
+    .setDescription('Plays provided Youtube song')
+    .addStringOption(option => 
+      option
+        .setName('url')
+        .setDescription('Provide a Youtube URL to reproduce')
+        .setRequired(true)),
   // Verify if this is the intended type
   async execute(interation: ChatInputCommandInteraction) {
-    await interation.reply('Pong!')
+    const youtubeUrl = interation.options.getString('url')
+
+    const guild = interation.client.guilds.cache.get(interation.guildId)
+    const member = guild.members.cache.get(interation.member.user.id)
+    const audioPlayer = createAudioPlayer()
+
+    // For debuggin purpose 
+    audioPlayer.on('stateChange', async (newState) => {
+      console.log(newState.status)
+    })
+
+    if (!member.voice.channel) return
+
+    const { channel } = member.voice
+    const voiceConnection = joinVoiceChannel({
+      channelId: channel.id,
+      guildId: guild.id,
+      adapterCreator: guild.voiceAdapterCreator
+    })
+
+    const process = youtubedl.exec(youtubeUrl, {
+      format: 'ba',
+      output: '-'
+    })
+
+    const resource = createAudioResource(process.stdout)
+    audioPlayer.play(resource)
+    voiceConnection.subscribe(audioPlayer)
+
+    await interation.reply('Trying to reproduce provided song')
   }
 }
-// // Create a join command where the bot will join said user channel
-// client.on('messageCreate', (message) => {
-//   // Check if member is part of the current guild and its in a voice channel
-//   const channel = message.member?.voice?.channel
-//   const audioPlayer = createAudioPlayer()
-//   let voiceConnection: VoiceConnection
-//   if (channel) {
-//     voiceConnection = joinVoiceChannel({
-//       channelId: channel.id,
-//       guildId: channel.guild.id,
-//       adapterCreator: channel.guild.voiceAdapterCreator
-//     })
-//     // Sample resource afterdark
-//     const process = youtubedl.exec('https://www.youtube.com/watch?v=Cl5Vkd4N03Q', {
-//       format: 'ba',
-//       output: '-'
-//     })
-//     if (!process.stdout) return
-//     const resource = createAudioResource(process.stdout)
-//     audioPlayer.play(resource)
-//     voiceConnection.subscribe(audioPlayer)
-//   }
-// })

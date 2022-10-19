@@ -37,7 +37,7 @@ client.on('ready', () => {
   console.log(`Logged in as ${client.user?.tag}`)
 })
 
-// liste to command execution and get it from its dictionary for its callback
+// listen to command execution and get it from its dictionary for its callback
 client.on('interactionCreate', async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
   // @ts-ignore
