@@ -39,7 +39,7 @@ client.on('ready', () => {
   // Create a QueueManager for each Guild the bot is in
   client.queues = new Map()
   client.guilds.cache.forEach(guild => {
-    client.queues.set(guild.id, new QueueManager())
+    client.queues.set(guild.id, new QueueManager(guild.id))
   })
 })
 

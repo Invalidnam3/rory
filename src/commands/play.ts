@@ -1,9 +1,7 @@
 import { ExtendedClient } from '../utils/client'
 
 import { ChatInputCommandInteraction, SlashCommandBuilder } from 'discord.js'
-import { joinVoiceChannel, createAudioPlayer, createAudioResource, VoiceConnection } from '@discordjs/voice'
-import * as youtubedl from 'youtube-dl-exec'
-
+import { joinVoiceChannel } from '@discordjs/voice'
 
 export default {
   data: new SlashCommandBuilder()
@@ -17,16 +15,14 @@ export default {
   // Verify if this is the intended type
   async execute(interation: ChatInputCommandInteraction) {
     const client: ExtendedClient = interation.client
+    const queueManager = client.queues.get(interation.guildId)
     const youtubeUrl = interation.options.getString('url')
+
+    // Add requested song to the Guild queue
+    queueManager.queue.push(youtubeUrl)
 
     const guild = interation.client.guilds.cache.get(interation.guildId)
     const member = guild.members.cache.get(interation.member.user.id)
-    const audioPlayer = createAudioPlayer()
-
-    // For debuggin purpose 
-    audioPlayer.on('stateChange', async (newState) => {
-      console.log(newState.status)
-    })
 
     if (!member.voice.channel) {
       await interation.reply('User is not in a voice channel')
@@ -34,20 +30,13 @@ export default {
     }
 
     const { channel } = member.voice
-    const voiceConnection = joinVoiceChannel({
+    joinVoiceChannel({
       channelId: channel.id,
       guildId: guild.id,
       adapterCreator: guild.voiceAdapterCreator
     })
 
-    const process = youtubedl.exec(youtubeUrl, {
-      format: 'ba',
-      output: '-'
-    })
-
-    const resource = createAudioResource(process.stdout)
-    audioPlayer.play(resource)
-    voiceConnection.subscribe(audioPlayer)
+    queueManager.play()
 
     await interation.reply('Trying to reproduce provided song')
   }
