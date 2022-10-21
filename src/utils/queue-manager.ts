@@ -1,5 +1,7 @@
 import { AudioPlayer, createAudioPlayer, createAudioResource, getVoiceConnection, VoiceConnection } from "@discordjs/voice"
 import * as youtubedl from 'youtube-dl-exec'
+import ytsr from 'ytsr'
+import { isValidYoutubeUrl } from "./utils"
 
 export class QueueManager {
   public guildId: string
@@ -16,14 +18,24 @@ export class QueueManager {
     this.registerAudioPlayerEvents()
   }
 
-  public play(): void {
+  public async play(): Promise<void> {
     this.voiceConnection = getVoiceConnection(this.guildId)
     console.log(this.queue, this.audioPlayer.state.status)
     if (
       this.voiceConnection 
       && this.queue.length > 0
       && this.audioPlayer.state.status !== 'playing') {
-      const process = youtubedl.exec(this.queue[0], {
+      let query = this.queue[0]
+      const validYoutubeUrl = isValidYoutubeUrl(query)
+      if (!validYoutubeUrl) {
+        // Get first result of youtube if it wasn't a URL
+        const youtubeResult = await ytsr(query, { limit:1 })
+        console.log(youtubeResult.items)
+        // @ts-ignore
+        query = youtubeResult.items[0]?.url
+      }
+      console.log(query)
+      const process = youtubedl.exec(query, {
         format: 'ba',
         output: '-'
       })
@@ -51,3 +63,4 @@ export class QueueManager {
     })
   }
 }
+

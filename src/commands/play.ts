@@ -9,17 +9,17 @@ export default {
     .setDescription('Plays provided Youtube song')
     .addStringOption(option => 
       option
-        .setName('url')
-        .setDescription('Provide a Youtube URL to reproduce')
+        .setName('query')
+        .setDescription('Provide a query Youtube URL to reproduce')
         .setRequired(true)),
   // Verify if this is the intended type
   async execute(interation: ChatInputCommandInteraction) {
     const client: ExtendedClient = interation.client
     const queueManager = client.queues.get(interation.guildId)
-    const youtubeUrl = interation.options.getString('url')
+    const query = interation.options.getString('query')
 
     // Add requested song to the Guild queue
-    queueManager.queue.push(youtubeUrl)
+    queueManager.queue.push(query)
 
     const guild = interation.client.guilds.cache.get(interation.guildId)
     const member = guild.members.cache.get(interation.member.user.id)
@@ -36,8 +36,8 @@ export default {
       adapterCreator: guild.voiceAdapterCreator
     })
 
-    queueManager.play()
-
+    
     await interation.reply('Trying to reproduce provided song')
+    queueManager.play()
   }
 }
