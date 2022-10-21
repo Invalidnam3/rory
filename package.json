@@ -2,7 +2,7 @@
   "name": "rory",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "src/entry.ts",
   "scripts": {
     "start": "ts-node src/entry.ts ",
     "build": "rimraf ./build && tsc",

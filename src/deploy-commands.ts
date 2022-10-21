@@ -10,7 +10,7 @@ import { REST, Routes } from 'discord.js'
 const commands:any = []
 const commandsPath = path.join(__dirname, 'commands')
 const commandFiles = fs.readdirSync(commandsPath)
-  .filter(file =>  file.endsWith('.ts'))
+  .filter(file =>  file.endsWith('.ts') || file.endsWith('js'))
   
 // console.log(path.join(__dirname, 'commands'))
 

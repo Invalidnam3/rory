@@ -1,4 +1,9 @@
 {
+  "ts-node": {
+    "cwd": "C:\\Users\\owl\\projects\\rory",
+    "projectSearchDir": "C:\\Users\\owl\\projects\\rory",
+    "project": "C:/Users/owl/projects/rory/tsconfig.json"
+  },
   "compilerOptions": {
     "module": "commonjs",
     "esModuleInterop": true,
@@ -8,7 +13,9 @@
     "outDir": "./build",
     "inlineSourceMap": false,
     "inlineSources": true,
+    "declarationMap": false,
     "declaration": false,
-    "noEmit": false
+    "noEmit": false,
+    "rootDir": "./src"
   }
 }
