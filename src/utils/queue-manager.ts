@@ -1,11 +1,10 @@
 import { AudioPlayer, createAudioPlayer, createAudioResource, getVoiceConnection, VoiceConnection } from "@discordjs/voice"
 import * as youtubedl from 'youtube-dl-exec'
-import ytsr from 'ytsr'
-import { isValidYoutubeUrl } from "./utils"
+import { Song } from "./song"
 
 export class QueueManager {
   public guildId: string
-  public queue: string[]
+  public queue: Song[]
 
   private voiceConnection: VoiceConnection
   private audioPlayer: AudioPlayer
@@ -18,24 +17,15 @@ export class QueueManager {
     this.registerAudioPlayerEvents()
   }
 
-  public async play(): Promise<void> {
+  public async play(song: Song): Promise<void> {
     this.voiceConnection = getVoiceConnection(this.guildId)
-    console.log(this.queue, this.audioPlayer.state.status)
+    console.log('Currente queue:', this.queue)
     if (
       this.voiceConnection 
       && this.queue.length > 0
       && this.audioPlayer.state.status !== 'playing') {
-      let query = this.queue[0]
-      const validYoutubeUrl = isValidYoutubeUrl(query)
-      if (!validYoutubeUrl) {
-        // Get first result of youtube if it wasn't a URL
-        const youtubeResult = await ytsr(query, { limit:1 })
-        console.log(youtubeResult.items)
-        // @ts-ignore
-        query = youtubeResult.items[0]?.url
-      }
-      console.log(query)
-      const process = youtubedl.exec(query, {
+      console.log(`Trying to reproduce ${song.title}`)
+      const process = youtubedl.exec(song.url, {
         format: 'ba',
         output: '-'
       })
@@ -46,19 +36,19 @@ export class QueueManager {
   }
 
   public skip(): void {
-    this.audioPlayer.stop(true)
-    this.queue.shift()
-    this.play()
+    console.log(`Skipped ${this.queue[0].title}`)
+    if (this.audioPlayer.state.status === 'playing') {
+      this.audioPlayer.stop(true)
+    }
   }
 
   private registerAudioPlayerEvents(): void {
     // For debuggin purpose 
-    this.audioPlayer.on('stateChange', async (newState) => {
-      const { status } = newState
-      // Song is done buffering, which means it already stopped
-      if (status === 'playing') {
+    this.audioPlayer.on('stateChange', async (oldState, newState) => {
+      // Song stopped playing and audioPlayer is now available
+      if (oldState.status === 'playing' && newState.status === 'idle') {
         this.queue.shift()
-        this.play()
+        if (this.queue.length > 0) this.play(this.queue[0])
       }
     })
   }

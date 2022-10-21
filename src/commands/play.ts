@@ -1,7 +1,11 @@
-import { ExtendedClient } from '../utils/client'
-
 import { ChatInputCommandInteraction, SlashCommandBuilder } from 'discord.js'
 import { joinVoiceChannel } from '@discordjs/voice'
+import ytdl from 'ytdl-core'
+import ytsr, { Video } from 'ytsr'
+
+import { ExtendedClient } from '../utils/client'
+import { isValidYoutubeUrl } from '../utils/utils'
+import { Song } from '../utils/song'
 
 export default {
   data: new SlashCommandBuilder()
@@ -17,10 +21,6 @@ export default {
     const client: ExtendedClient = interation.client
     const queueManager = client.queues.get(interation.guildId)
     const query = interation.options.getString('query')
-
-    // Add requested song to the Guild queue
-    queueManager.queue.push(query)
-
     const guild = interation.client.guilds.cache.get(interation.guildId)
     const member = guild.members.cache.get(interation.member.user.id)
 
@@ -36,8 +36,29 @@ export default {
       adapterCreator: guild.voiceAdapterCreator
     })
 
-    
-    await interation.reply('Trying to reproduce provided song')
-    queueManager.play()
+    let song: Song
+    const validYoutubeUrl = isValidYoutubeUrl(query)
+    // Get first result of youtube if it wasn't a URL
+    if (!validYoutubeUrl) {
+      const youtubeResult = await ytsr(query, { limit:1 })
+      const youtubeItem = youtubeResult.items[0] as Video
+      // console.log(youtubeResult.items)
+      song = new Song({
+        title: youtubeItem.title,
+        url:  youtubeItem.url
+      })
+    } else {
+      const youtubeInfo = await ytdl.getInfo(query)
+      song = new Song({
+        title: youtubeInfo.videoDetails.title,
+        url: query
+      })
+    }
+    // Add requested  song to the Guild queue
+    client.queues.get(guild.id).queue.push(song)
+    queueManager.play(song)
+    await interation.reply({
+      content:`Added ${song.title} to the queue.`
+    })
   }
 }

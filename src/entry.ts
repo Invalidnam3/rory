@@ -1,5 +1,3 @@
-import { Command } from '../types/global'
-
 // load .env file into process.env
 import { config } from 'dotenv'
 config()
@@ -8,6 +6,8 @@ import fs from 'node:fs'
 import path from 'node:path'
 
 import { Collection, GatewayIntentBits } from 'discord.js'
+
+import { Command } from '../types/global'
 import { QueueManager } from './utils/queue-manager'
 import { ExtendedClient } from './utils/client'
 

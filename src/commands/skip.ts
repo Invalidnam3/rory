@@ -7,7 +7,12 @@ export default {
     .setDescription('Skips current song'),
   async execute(interation: ChatInputCommandInteraction) {
     const client: ExtendedClient = interation.client
-    client.queues.get(interation.guildId).skip()
-    await interation.reply('Skipped current song')
+    const queueManager = client.queues.get(interation.guildId)
+    const song = queueManager.queue[0]
+    queueManager.skip()
+    const message = song ?
+      `Skipped ${song.title}` :
+      'No song is currently playing'
+    await interation.reply(message)
   }
 }
