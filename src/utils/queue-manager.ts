@@ -43,10 +43,10 @@ export class QueueManager {
   }
 
   private registerAudioPlayerEvents(): void {
-    // For debuggin purpose 
     this.audioPlayer.on('stateChange', async (oldState, newState) => {
       // Song stopped playing and audioPlayer is now available
       if (oldState.status === 'playing' && newState.status === 'idle') {
+        // Play next song available in the Queue if any
         this.queue.shift()
         if (this.queue.length > 0) this.play(this.queue[0])
       }

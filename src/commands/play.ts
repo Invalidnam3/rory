@@ -14,14 +14,13 @@ export default {
     .addStringOption(option => 
       option
         .setName('query')
-        .setDescription('Provide a query Youtube URL to reproduce')
+        .setDescription('Provide a query or Youtube URL to reproduce')
         .setRequired(true)),
-  // Verify if this is the intended type
   async execute(interation: ChatInputCommandInteraction) {
     const client: ExtendedClient = interation.client
     const queueManager = client.queues.get(interation.guildId)
     const query = interation.options.getString('query')
-    const guild = interation.client.guilds.cache.get(interation.guildId)
+    const guild = client.guilds.cache.get(interation.guildId)
     const member = guild.members.cache.get(interation.member.user.id)
 
     if (!member.voice.channel) {
@@ -38,11 +37,10 @@ export default {
 
     let song: Song
     const validYoutubeUrl = isValidYoutubeUrl(query)
-    // Get first result of youtube if it wasn't a URL
+    // Get first result of youtube if it wasn't a Youtube URL
     if (!validYoutubeUrl) {
       const youtubeResult = await ytsr(query, { limit:1 })
       const youtubeItem = youtubeResult.items[0] as Video
-      // console.log(youtubeResult.items)
       song = new Song({
         title: youtubeItem.title,
         url:  youtubeItem.url
