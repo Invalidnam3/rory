@@ -5,8 +5,8 @@ import { Song } from "./song"
 export class QueueManager {
   public guildId: string
   public queue: Song[]
+  public audioPlayer: AudioPlayer
 
-  private audioPlayer: AudioPlayer
   private listeningToVoiceConnection: boolean
 
   constructor(guildId: string) {
