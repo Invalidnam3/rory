@@ -4,6 +4,6 @@ export function isValidYoutubeUrl(url: string): boolean {
 }
 
 export function getYoutubePlaylistId(url: string): string | null {
-  const regExp = new RegExp('/[&?]list=([^&]+)/i')
+  const regExp = new RegExp(/[&?]list=([^&]+)/i)
   return regExp.exec(url) ? regExp.exec(url)[1]: null
 }
