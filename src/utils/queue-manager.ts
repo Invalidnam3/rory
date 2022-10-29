@@ -6,8 +6,8 @@ export class QueueManager {
   public guildId: string
   public queue: Song[]
 
-  private voiceConnection: VoiceConnection
   private audioPlayer: AudioPlayer
+  private listeningToVoiceConnection: boolean
 
   constructor(guildId: string) {
     this.guildId = guildId
@@ -15,13 +15,14 @@ export class QueueManager {
     this.audioPlayer = createAudioPlayer()
 
     this.registerAudioPlayerEvents()
+    this.registerVoiceConnectionEvents()
   }
 
   public async play(song: Song): Promise<void> {
-    this.voiceConnection = getVoiceConnection(this.guildId)
+    const voiceConnection = getVoiceConnection(this.guildId)
     console.log('Currente queue:', this.queue)
     if (
-      this.voiceConnection 
+      voiceConnection 
       && this.queue.length > 0
       && this.audioPlayer.state.status !== 'playing') {
       console.log(`Trying to reproduce ${song.title}`)
@@ -31,7 +32,7 @@ export class QueueManager {
       })
       const resource = createAudioResource(process.stdout)
       this.audioPlayer.play(resource)
-      this.voiceConnection.subscribe(this.audioPlayer)
+      voiceConnection.subscribe(this.audioPlayer)
     }
   }
 
@@ -39,6 +40,21 @@ export class QueueManager {
     console.log(`Skipped ${this.queue[0].title}`)
     if (this.audioPlayer.state.status === 'playing') {
       this.audioPlayer.stop(true)
+    }
+  }
+
+  public registerVoiceConnectionEvents(): void {
+    const voiceConnection = getVoiceConnection(this.guildId)
+    if (voiceConnection && !this.listeningToVoiceConnection) {
+      console.log('Registering VoiceConnection Listeners')
+      voiceConnection.on('stateChange', async (oldState, newState) => {
+        if (newState.status.toString() === 'disconnected') {
+          console.log('Cleaning the Queue')
+          this.queue = []
+          this.listeningToVoiceConnection = false
+        }
+      })
+      this.listeningToVoiceConnection = true
     }
   }
 

@@ -16,9 +16,14 @@ export default {
 
     let queueMessage = '```' 
     for (let i = 0; i < queue.length; i++) {
-      queueMessage += `${i+1}.${queue[i].title}\n`
+      const songText = `${i+1}.${queue[i].title}\n`
+      // If the new songText will overflow discord 2000 character limit, stop
+      if (queueMessage.length + songText.length > 1996) continue
+      queueMessage += songText
     }
     queueMessage += '```'
+    // Discord 2000 characters limit
+    if (queueMessage.length > 2000) queueMessage = queueMessage.slice(0, 1996) + '```'
     await interation.reply(queueMessage)
   }
 }

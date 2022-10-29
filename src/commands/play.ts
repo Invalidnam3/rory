@@ -1,10 +1,11 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from 'discord.js'
-import { joinVoiceChannel } from '@discordjs/voice'
+import { getVoiceConnection, joinVoiceChannel } from '@discordjs/voice'
+import ytpl from 'ytpl'
 import ytdl from 'ytdl-core'
 import ytsr, { Video } from 'ytsr'
 
 import { ExtendedClient } from '../utils/client'
-import { isValidYoutubeUrl } from '../utils/utils'
+import { getYoutubePlaylistId, isValidYoutubeUrl } from '../utils/utils'
 import { Song } from '../utils/song'
 
 export default {
@@ -28,13 +29,18 @@ export default {
       return
     }
 
+    const voiceChannel = getVoiceConnection(guild.id)
     const { channel } = member.voice
-    joinVoiceChannel({
-      channelId: channel.id,
-      guildId: guild.id,
-      adapterCreator: guild.voiceAdapterCreator
-    })
 
+    if (!voiceChannel) {
+      joinVoiceChannel({
+        channelId: channel.id,
+        guildId: guild.id,
+        adapterCreator: guild.voiceAdapterCreator
+      })
+    }
+    queueManager.registerVoiceConnectionEvents()
+    
     let song: Song
     const validYoutubeUrl = isValidYoutubeUrl(query)
     // Get first result of youtube if it wasn't a Youtube URL
@@ -46,14 +52,31 @@ export default {
         url:  youtubeItem.url
       })
     } else {
-      const youtubeInfo = await ytdl.getInfo(query)
-      song = new Song({
-        title: youtubeInfo.videoDetails.title,
-        url: query
-      })
+      const playlistId = getYoutubePlaylistId(query)
+      console.log(playlistId)
+      if (playlistId) {
+        const youtubePlaylist = await ytpl(playlistId, { limit: Infinity })
+        youtubePlaylist.items.forEach(youtubeSong =>
+          queueManager.queue.push(new Song({
+            title: youtubeSong.title,
+            url: youtubeSong.shortUrl
+          }))
+        )
+        await interation.reply({
+          content:`Added ${youtubePlaylist.items.length} Songs to the queue.`
+        })
+        queueManager.play(queueManager.queue[0])
+        return
+      } else {
+        const youtubeInfo = await ytdl.getInfo(query)
+        song = new Song({
+          title: youtubeInfo.videoDetails.title,
+          url: query
+        })
+      }
     }
     // Add requested  song to the Guild queue
-    client.queues.get(guild.id).queue.push(song)
+    queueManager.queue.push(song)
     queueManager.play(song)
     await interation.reply({
       content:`Added ${song.title} to the queue.`
