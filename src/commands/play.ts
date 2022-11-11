@@ -32,13 +32,14 @@ export default {
     const voiceChannel = getVoiceConnection(guild.id)
     const { channel } = member.voice
 
-    if (!voiceChannel) {
+    if (!voiceChannel || voiceChannel.state.status === 'disconnected') {
       joinVoiceChannel({
         channelId: channel.id,
         guildId: guild.id,
         adapterCreator: guild.voiceAdapterCreator
       })
     }
+    
     queueManager.registerVoiceConnectionEvents()
     
     let song: Song

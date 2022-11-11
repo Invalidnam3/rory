@@ -49,8 +49,9 @@ export class QueueManager {
       console.log('Registering VoiceConnection Listeners')
       voiceConnection.on('stateChange', async (oldState, newState) => {
         if (newState.status.toString() === 'disconnected') {
-          console.log('Cleaning the Queue')
+          console.log('Cleaning the Queue and stopping audioPlayer')
           this.queue = []
+          this.audioPlayer.stop(true)
           this.listeningToVoiceConnection = false
         }
       })
