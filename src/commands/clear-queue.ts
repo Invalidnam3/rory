@@ -9,8 +9,7 @@ export default {
   async execute(interation: ChatInputCommandInteraction) {
     const client: ExtendedClient = interation.client
     const queueManager = client.queues?.get(interation.guildId)
-    queueManager.queue = []
-    queueManager.audioPlayer.stop(true)
+    queueManager.clearQueue()
     await interation.reply('Queue has been cleared')
   }
 }

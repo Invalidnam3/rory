@@ -21,7 +21,6 @@ const client = new ExtendedClient({
   ]
 })
 
-// We have to disable ts checks here until we know how to extend Client
 client.commands = new Collection()
 const commandsPath = path.join(__dirname, 'commands')
 const commandFiles = fs.readdirSync(commandsPath)

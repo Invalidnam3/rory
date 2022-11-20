@@ -18,13 +18,28 @@ export class QueueManager {
     this.registerVoiceConnectionEvents()
   }
 
-  public async play(song: Song): Promise<void> {
+  public clearQueue(): void {
+    this.queue = []
+    this.audioPlayer.stop(true)
+  }
+
+  public move(from: number, to: number): void {
+    if (to > this.queue.length) return
+    const song = this.queue[to]
+    this.queue[to] = this.queue[from]
+    this.queue[from] = song
+    if(to === 0) {
+      this.play(this.queue[to], true)
+    }
+  }
+
+  public play(song: Song, force?: boolean): void {
     const voiceConnection = getVoiceConnection(this.guildId)
     console.log('Currente queue:', this.queue)
     if (
       voiceConnection 
       && this.queue.length > 0
-      && this.audioPlayer.state.status !== 'playing') {
+      && (this.audioPlayer.state.status !== 'playing' || force)) {
       console.log(`Trying to reproduce ${song.title}`)
       const process = youtubedl.exec(song.url, {
         format: 'ba',
