@@ -40,6 +40,7 @@ client.on('ready', () => {
   client.guilds.cache.forEach(guild => {
     client.queues.set(guild.id, new QueueManager(guild.id))
   })
+  console.log(client.queues.values())
 })
 
 // listen to command execution and get it from its dictionary
