@@ -1,0 +1,2 @@
+# rory
+Personal discord bot
